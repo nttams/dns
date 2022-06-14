@@ -53,11 +53,19 @@ type Record struct {
 	r_data    string
 }
 
+func (record *Record) GetDomain() string {
+	return record.name
+}
+
 func NewRecord(name string, q_type, q_class uint16, ttl uint32, rd_length uint16, r_data string) Record {
 	return Record{name, q_type, q_class, ttl, rd_length, r_data}
 }
 
 type Records []Record
+
+func (msg * Message) GetQuestionDomain() string {
+	return msg.question.q_name
+}
 
 func ParseMessage(req []byte) Message {
 	pos := 0

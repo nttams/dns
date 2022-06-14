@@ -2,6 +2,7 @@ package zone_handler
 
 import (
 	"fmt"
+	"errors"
 	msg "message"
 	"os"
 	"bufio"
@@ -9,17 +10,31 @@ import (
 	"strconv"
 )
 
-func ReadZone() {
-	fmt.Println("hi")
+func FindDomain(domain string) []msg.Record {
 
-	readFile("./zone")
+	result := []msg.Record{}
+
+	allRecords, _ := readWholeFile("./zone")
+
+	for _, record := range allRecords {
+		if record.GetDomain() == domain {
+			result = append(result, record)
+		}
+	}
+
+	return result
 }
 
-func readFile(file_path string) {
+func ReadZone() {
+	// readWholeFile("./zone")
+	fmt.Println(readWholeFile("./zone"))
+}
+
+func readWholeFile(file_path string) ([]msg.Record, error) {
 	file, err := os.Open(file_path)
 
 	if err != nil {
-		return
+		return nil, errors.New("can not read file")
 	}
 	defer file.Close()
 
@@ -29,14 +44,14 @@ func readFile(file_path string) {
 
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
-		// fmt.Println(sanner.Text())
 	}
 
+	result := []msg.Record{}
 	for _, line := range lines {
-		fmt.Println(strings.Fields(line))
+		result = append(result, parseLineToRecord(line))
 	}
 
-	fmt.Println(lines)
+	return result, nil
 }
 
 func parseLineToRecord(line string) msg.Record {
