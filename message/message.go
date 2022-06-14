@@ -63,9 +63,76 @@ func NewRecord(name string, q_type, q_class uint16, ttl uint32, rd_length uint16
 
 type Records []Record
 
-func (msg * Message) GetQuestionDomain() string {
+func (msg *Message) GetQuestionDomain() string {
 	return msg.question.q_name
 }
+
+func (msg *Message) GetId() uint16 {
+	return msg.header.id
+}
+
+// encoding
+
+func (hf *HeaderFlags) encode() []byte {
+
+	var first byte = 0b0000_0000
+	var second byte = 0b0000_0000
+
+	if hf.qr {
+		first = first | (1 << 7)
+	}
+	first = first | (hf.op_code << 3)
+	if hf.aa {
+		first = first | (1 << 2)
+	}
+	if hf.tc {
+		first = first | (1 << 1)
+	}
+	if hf.rd {
+		first = first | (1 << 0)
+	}
+
+	if hf.ra {
+		second = second | (1 << 7)
+	}
+	if hf.z {
+		second = second | (1 << 7)
+	}
+	if hf.ad {
+		second = second | (1 << 7)
+	}
+	if hf.cd {
+		second = second | (1 << 7)
+	}
+	second = second | (hf.r_code << 0)
+
+	return []byte{first, second}
+}
+
+func (header *Header) encode() []byte {
+	result := []byte{}
+
+	result = append(result, byte((header.id&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.id&0b0000_0000_1111_1111)>>0))
+
+	result = append(result, header.header_flags.encode()...) //todo: learn this
+
+	result = append(result, byte((header.qd_count&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.qd_count&0b0000_0000_1111_1111)>>0))
+
+	result = append(result, byte((header.an_count&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.an_count&0b0000_0000_1111_1111)>>0))
+
+	result = append(result, byte((header.ns_count&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.ns_count&0b0000_0000_1111_1111)>>0))
+
+	result = append(result, byte((header.ar_count&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.ar_count&0b0000_0000_1111_1111)>>0))
+
+	return result
+}
+
+// parsing
 
 func ParseMessage(req []byte) Message {
 	pos := 0

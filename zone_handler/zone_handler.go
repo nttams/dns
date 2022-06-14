@@ -1,7 +1,7 @@
 package zone_handler
 
 import (
-	"fmt"
+	// "fmt"
 	"errors"
 	msg "message"
 	"os"
@@ -23,11 +23,6 @@ func FindDomain(domain string) []msg.Record {
 	}
 
 	return result
-}
-
-func ReadZone() {
-	// readWholeFile("./zone")
-	fmt.Println(readWholeFile("./zone"))
 }
 
 func readWholeFile(file_path string) ([]msg.Record, error) {
