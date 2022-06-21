@@ -53,18 +53,18 @@ func parseLineToRecord(line string) msg.Record {
 	fields := strings.Fields(line)
 
 	name := fields[0]
-	q_type, _ := strconv.Atoi(fields[3])
-	q_class, _ := strconv.Atoi(fields[2])
+	qType, _ := strconv.Atoi(fields[3])
+	qClass, _ := strconv.Atoi(fields[2])
 	ttl, _ := strconv.Atoi(fields[1])
-	r_data := fields[4]
-	rd_length := len(r_data)
+	rData := fields[4]
+	rdLength := len(rData)
 
 	return msg.NewRecord(
 		name,
-		uint16(q_type),
-		uint16(q_class),
+		uint16(qType),
+		uint16(qClass),
 		uint32(ttl),
-		uint16(rd_length),
-		r_data,
+		uint16(rdLength),
+		rData,
 	)
 }

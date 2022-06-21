@@ -12,19 +12,6 @@ type Message struct {
 	additional Records
 }
 
-type Header struct {
-	id           uint16
-	header_flags HeaderFlags
-	qd_count     uint16
-	an_count     uint16
-	ns_count     uint16
-	ar_count     uint16
-}
-
-func NewHeader(id uint16, header_flags HeaderFlags, qd_count, an_count, ns_count, ar_count uint16) *Header {
-	return &Header{id, header_flags, qd_count, an_count, ns_count, ar_count}
-}
-
 type HeaderFlags struct {
 	qr      bool
 	op_code byte
@@ -38,33 +25,60 @@ type HeaderFlags struct {
 	r_code  byte
 }
 
+type Header struct {
+	id           uint16
+	header_flags HeaderFlags
+	qdCount      uint16
+	anCount      uint16
+	nsCount      uint16
+	arCount      uint16
+}
+
+func NewHeader(id uint16, header_flags HeaderFlags, qdCount, anCount, nsCount, arCount uint16) *Header {
+	return &Header{id, header_flags, qdCount, anCount, nsCount, arCount}
+}
+
+type domainType uint8
+
+const (
+	InvalidType domainType = iota
+	Literal
+	Pointer
+)
+
+type Domain struct {
+	domainType    domainType
+	domainLiteral string
+	point         uint16
+}
+
 type Question struct {
-	q_name  string
-	q_type  uint16
-	q_class uint16
+	domain string
+	qType  uint16
+	qClass uint16
 }
 
 type Record struct {
-	name      string
-	q_type    uint16
-	q_class   uint16
-	ttl       uint32
-	rd_length uint16
-	r_data    string
+	domain   string
+	qType    uint16
+	qClass   uint16
+	ttl      uint32
+	rdLength uint16
+	rData    string
 }
 
 func (record *Record) GetDomain() string {
-	return record.name
+	return record.domain
 }
 
-func NewRecord(name string, q_type, q_class uint16, ttl uint32, rd_length uint16, r_data string) Record {
-	return Record{name, q_type, q_class, ttl, rd_length, r_data}
+func NewRecord(domain string, qType, qClass uint16, ttl uint32, rdLength uint16, rData string) Record {
+	return Record{domain, qType, qClass, ttl, rdLength, rData}
 }
 
 type Records []Record
 
 func (msg *Message) GetQuestionDomain() string {
-	return msg.question.q_name
+	return msg.question.domain
 }
 
 func (msg *Message) GetId() uint16 {
@@ -117,18 +131,23 @@ func (header *Header) encode() []byte {
 
 	result = append(result, header.header_flags.encode()...) //todo: learn this
 
-	result = append(result, byte((header.qd_count&0b1111_1111_0000_0000)>>8))
-	result = append(result, byte((header.qd_count&0b0000_0000_1111_1111)>>0))
+	result = append(result, byte((header.qdCount&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.qdCount&0b0000_0000_1111_1111)>>0))
 
-	result = append(result, byte((header.an_count&0b1111_1111_0000_0000)>>8))
-	result = append(result, byte((header.an_count&0b0000_0000_1111_1111)>>0))
+	result = append(result, byte((header.anCount&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.anCount&0b0000_0000_1111_1111)>>0))
 
-	result = append(result, byte((header.ns_count&0b1111_1111_0000_0000)>>8))
-	result = append(result, byte((header.ns_count&0b0000_0000_1111_1111)>>0))
+	result = append(result, byte((header.nsCount&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.nsCount&0b0000_0000_1111_1111)>>0))
 
-	result = append(result, byte((header.ar_count&0b1111_1111_0000_0000)>>8))
-	result = append(result, byte((header.ar_count&0b0000_0000_1111_1111)>>0))
+	result = append(result, byte((header.arCount&0b1111_1111_0000_0000)>>8))
+	result = append(result, byte((header.arCount&0b0000_0000_1111_1111)>>0))
 
+	return result
+}
+
+func (question *Question) encode() []byte {
+	result := []byte{}
 	return result
 }
 
@@ -143,13 +162,13 @@ func ParseMessage(req []byte) Message {
 	question, count := parseQuestion(req, pos)
 	pos += count
 
-	answer, count := parseRecords(req, pos, int(header.an_count))
+	answer, count := parseRecords(req, pos, int(header.anCount))
 	pos += count
 
-	authority, count := parseRecords(req, pos, int(header.ns_count))
+	authority, count := parseRecords(req, pos, int(header.nsCount))
 	pos += count
 
-	additional, count := parseRecords(req, pos, int(header.ar_count))
+	additional, count := parseRecords(req, pos, int(header.arCount))
 	pos += count
 
 	return Message{header, question, answer, authority, additional}
@@ -170,48 +189,48 @@ func parseRecords(req []byte, pos, record_count int) (Records, int) {
 
 func parseRecord(req []byte, pos int) (Record, int) {
 	start := pos
-	q_name, count := parseDomainName(req, pos)
+	domain, count := parsedomain(req, pos)
 	pos += count
 
-	q_type := parseUint16(req, pos)
+	qType := parseUint16(req, pos)
 	pos += 2
 
-	q_class := parseUint16(req, pos)
+	qClass := parseUint16(req, pos)
 	pos += 2
 
 	ttl := parseUint32(req, pos)
 	pos += 4
 
-	rd_length := parseUint16(req, pos)
+	rdLength := parseUint16(req, pos)
 	pos += 2
 
-	r_data_slice := make([]byte, rd_length)
-	copy(r_data_slice, req[start:start+int(rd_length)])
-	r_data := string(r_data_slice)
+	rData_slice := make([]byte, rdLength)
+	copy(rData_slice, req[start:start+int(rdLength)])
+	rData := string(rData_slice)
 
-	pos += int(rd_length)
+	pos += int(rdLength)
 
-	record := Record{q_name, q_type, q_class, ttl, rd_length, r_data}
+	record := Record{domain, qType, qClass, ttl, rdLength, rData}
 
 	return record, pos - start
 }
 
 func parseQuestion(req []byte, pos int) (Question, int) {
-	q_name, count := parseDomainName(req, pos)
+	domain, count := parsedomain(req, pos)
 	pos += count
 
-	q_type := parseUint16(req, pos)
+	qType := parseUint16(req, pos)
 	pos += 2
 
-	q_class := parseUint16(req, pos)
+	qClass := parseUint16(req, pos)
 	pos += 2
 
-	question := Question{q_name, q_type, q_class}
+	question := Question{domain, qType, qClass}
 	return question, count + 4
 }
 
 // todo: should handle both literal and pointer
-func parseDomainName(req []byte, pos int) (string, int) {
+func parsedomain(req []byte, pos int) (string, int) {
 
 	// todo: quick fix
 	if req[pos] == 0 {
@@ -235,9 +254,9 @@ func parseDomainName(req []byte, pos int) (string, int) {
 		}
 	}
 
-	q_name := string(domain_slice)
+	domain := string(domain_slice)
 	parse_count := pos - start
-	return q_name, parse_count
+	return domain, parse_count
 }
 
 func parseHeader(req []byte, pos int) (Header, int) {
@@ -247,18 +266,18 @@ func parseHeader(req []byte, pos int) (Header, int) {
 	header_flags := parseHeaderFlags(req, pos)
 	pos += 2
 
-	qd_count := parseUint16(req, pos)
+	qdCount := parseUint16(req, pos)
 	pos += 2
 
-	an_count := parseUint16(req, pos)
+	anCount := parseUint16(req, pos)
 	pos += 2
 
-	ns_count := parseUint16(req, pos)
+	nsCount := parseUint16(req, pos)
 	pos += 2
 
-	ar_count := parseUint16(req, pos)
+	arCount := parseUint16(req, pos)
 
-	header := Header{id, header_flags, qd_count, an_count, ns_count, ar_count}
+	header := Header{id, header_flags, qdCount, anCount, nsCount, arCount}
 	return header, 12
 }
 

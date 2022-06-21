@@ -18,7 +18,7 @@ func listen() {
 	req := make([]byte, 512)
 	for {
 
-		_, remote_addr, _ := conn.ReadFromUDP(req)
+		_, remoteAddr, _ := conn.ReadFromUDP(req)
 
 		result := msg.ParseMessage(req)
 		domain := result.GetQuestionDomain()
@@ -26,7 +26,7 @@ func listen() {
 		resultRecords := zone.FindDomain(domain)
 
 		// fmt.Println(domain)
-		fmt.Println(resultRecords)
+		fmt.Println("result: ", resultRecords)
 
 		// ////////////////////////
 		// res := make([]byte, 124)
@@ -35,6 +35,6 @@ func listen() {
 		res[0] = req[0]
 		res[1] = req[1]
 
-		conn.WriteToUDP(res, remote_addr)
+		conn.WriteToUDP(res, remoteAddr)
 	}
 }
