@@ -1,7 +1,7 @@
 package message
 
 import (
-// "fmt"
+	// "fmt"
 )
 
 type Message struct {
@@ -205,7 +205,7 @@ func parseRecord(req []byte, pos int) (Record, int) {
 	pos += 2
 
 	rData_slice := make([]byte, rdLength)
-	copy(rData_slice, req[start:start+int(rdLength)])
+	copy(rData_slice, req[pos:pos+int(rdLength)])
 	rData := string(rData_slice)
 
 	pos += int(rdLength)

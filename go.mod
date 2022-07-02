@@ -3,7 +3,6 @@ module main
 go 1.18
 
 replace message => ./message
-
 replace zone_handler => ./zone_handler
 
 require (

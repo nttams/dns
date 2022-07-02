@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	msg "message"
 	"net"
+	msg "message"
 	zone "zone_handler"
 )
 
@@ -12,10 +12,13 @@ func main() {
 }
 
 func listen() {
-	addr, _ := net.ResolveUDPAddr("udp", "192.168.1.99:15353")
-	conn, _ := net.ListenUDP("udp", addr)
+	addr, err := net.ResolveUDPAddr("udp", "192.168.1.99:15353")
+	fmt.Println(err)
+	conn, err := net.ListenUDP("udp", addr)
+	fmt.Println(err)
 
 	req := make([]byte, 512)
+	fmt.Println(req)
 	for {
 
 		_, remoteAddr, _ := conn.ReadFromUDP(req)
