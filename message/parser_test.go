@@ -2,6 +2,7 @@ package message
 
 import (
 	"testing"
+	"reflect"
 )
 
 // todo: add another request
@@ -24,9 +25,16 @@ var REQUEST_0 = []byte{
 	0x00, 0x0a, 0x00, 0x08, 0x54, 0xe6, 0x02, 0x6b, 0x32, 0xc0, 0x4b, 0x93,
 }
 
+var expectedOptRecord = Record {
+	string(byte(0)), 41, 4096, 0, 12,
+	string([]byte {0x00, 0x0a, 0x00, 0x08, 0x54, 0xe6, 0x02, 0x6b, 0x32, 0xc0, 0x4b, 0x93} ),
+}
+
+var expectedHeaderFlags = HeaderFlags { false, 0, false, false, true, false, false, false, false, 0 }
+var expectedHeader = Header {5, expectedHeaderFlags, 1, 0, 0, 1}
+var expectedQuestion = Question { Domain {Literal, "google.com", 0}, 1, 1}
+
 func TestParseHeader(t *testing.T) {
-	expectedHeaderFlags := HeaderFlags { false, 0, false, false, true, false, false, false, false, 0 }
-	expectedHeader := Header {5, expectedHeaderFlags, 1, 0, 0, 1}
 	expectedCount := 12
 
 	pos := 0
@@ -41,7 +49,6 @@ func TestParseHeader(t *testing.T) {
 }
 
 func TestParseQuestion(t *testing.T) {
-	expectedQuestion := Question {"google.com", 1, 1}
 	expectedCount := 16
 
 	pos := 12
@@ -57,11 +64,7 @@ func TestParseQuestion(t *testing.T) {
 }
 
 func TestParseRecords(t *testing.T) {
-	expectedRecord := Record {
-		string(byte(0)), 41, 4096, 0, 12,
-		string([]byte {0x00, 0x0a, 0x00, 0x08, 0x54, 0xe6, 0x02, 0x6b, 0x32, 0xc0, 0x4b, 0x93} ),
-	}
-	expectedRecords := Records { expectedRecord }
+	expectedRecords := Records { expectedOptRecord }
 	expectedCount := 23
 
 	pos := 28
@@ -78,5 +81,19 @@ func TestParseRecords(t *testing.T) {
 
 	if count != expectedCount {
 		t.Fatalf("parse content failed")
+	}
+}
+
+func TestParseMessage(t *testing.T) {
+	expectedAnswer := Records {}
+	expectedAuthority := Records {}
+	expectedAdditional := Records { expectedOptRecord }
+
+	expectedMsg := Message { expectedHeader, expectedQuestion, expectedAnswer, expectedAuthority, expectedAdditional }
+
+	msg := ParseMessage(REQUEST_0)
+
+	if !reflect.DeepEqual(msg, expectedMsg) {
+		t.Fatalf("failed")
 	}
 }

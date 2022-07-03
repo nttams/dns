@@ -25,8 +25,8 @@ func FindDomain(domain string) []msg.Record {
 	return result
 }
 
-func readWholeFile(file_path string) ([]msg.Record, error) {
-	file, err := os.Open(file_path)
+func readWholeFile(filePath string) ([]msg.Record, error) {
+	file, err := os.Open(filePath)
 
 	if err != nil {
 		return nil, errors.New("can not read file")

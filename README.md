@@ -1,11 +1,12 @@
-# DNS server
+# DNS server & client
 
-a dns server, with dns client for upstream query
+DnsClient is independent
+DnsServer depends on DnsClient for upstream query
 
 ## Todo
-* network handling
-* dns client
+* network handling (UDP, TCP, timeout, retransmission, TCP fallback)
 * parser and encoder
+* EDNS (RFC6891)
 * zone handler
 * zone transer
 * upstream query
