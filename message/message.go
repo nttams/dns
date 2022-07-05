@@ -5,46 +5,59 @@ import (
 	"strconv"
 )
 
+const Q_TYPE_A = 1
+const Q_TYPE_AAAA = 28
+
+const Q_CLASS_IN = 1
+const DEFAULT_Q_CLASS = Q_CLASS_IN
+
 type Message struct {
-	header     Header
-	question   Question
-	answer     Records
-	authority  Records
-	additional Records
+	header      Header
+	questions   []Question
+	answers     []Record
+	authorities []Record
+	additionals []Record
 }
 
-// this will expose internal data
-func (msg *Message) GetAnswers() (result []string) {
-	for _, answer := range msg.answer {
-		ip := strconv.Itoa(int(answer.rData[0])) + "." +
-			  strconv.Itoa(int(answer.rData[1])) + "." +
-			  strconv.Itoa(int(answer.rData[2])) + "." +
-			  strconv.Itoa(int(answer.rData[3]))
-		result = append(result, ip)
-		// result = append(result, string(answer.rData))
-	}
-	return
-}
-
-func NewQuery(id uint16, domain string) (msg Message) {
+func NewQuery(id uint16, domain string, qType uint16) (msg Message) {
 	msg.header = newRequestHeader(id)
-	msg.question = NewQuestion(domain)
+	msg.questions = []Question{NewQuestion(domain, qType)}
 	msg.header.qdCount = 1
 
 	return
 }
 
-func (msg *Message) Encode() (result []byte) {
-	result = append(result, msg.header.encode()...)
-	result = append(result, msg.question.encode()...)
-	result = append(result, msg.answer.encode()...)
-	result = append(result, msg.authority.encode()...)
-	result = append(result, msg.additional.encode()...)
+func CreateResponseFromRequest(req Message) (res Message) {
+	res.header.id = req.header.id
+
+	res.header.headerFlags = req.header.headerFlags
+	res.header.headerFlags.qr = true
+	res.header.headerFlags.ra = true
+
+	res.header.qdCount = req.header.qdCount
+	res.questions = req.questions
+
 	return
 }
 
+func (res *Message) SetAnswers(answers []Record) {
+	res.answers = answers
+	res.header.anCount = uint16(len(answers))
+}
+
+func (msg *Message) Encode() (result []byte) {
+	result = append(result, msg.header.encode()...)
+	result = append(result, encodeQuestions(msg.questions)...)
+	result = append(result, encodeRecords(msg.answers)...)
+	result = append(result, encodeRecords(msg.authorities)...)
+	result = append(result, encodeRecords(msg.additionals)...)
+
+	return
+}
+
+// todo: note this [0]
 func (msg *Message) GetQuestionDomain() string {
-	return msg.question.domain.domainLiteral
+	return msg.questions[0].domain
 }
 
 func (msg *Message) GetId() uint16 {
@@ -57,7 +70,7 @@ func ParseMessage(req []byte) Message {
 	header, count := parseHeader(req, pos)
 	pos += count
 
-	question, count := parseQuestion(req, pos)
+	question, count := parseQuestions(req, pos, int(header.qdCount))
 	pos += count
 
 	answer, count := parseRecords(req, pos, int(header.anCount))
@@ -72,27 +85,17 @@ func ParseMessage(req []byte) Message {
 	return Message{header, question, answer, authority, additional}
 }
 
-func encodeUint16(value uint16) (result []byte) {
-	result = append(result, byte((value & 0b11111111_00000000) >> 8))
-	result = append(result, byte((value & 0b00000000_11111111)))
+func (msg *Message) GetAnswers() (result []string) {
+	for _, answer := range msg.answers {
+		ip := strconv.Itoa(int(answer.rData[0])) + "." +
+			strconv.Itoa(int(answer.rData[1])) + "." +
+			strconv.Itoa(int(answer.rData[2])) + "." +
+			strconv.Itoa(int(answer.rData[3]))
+		result = append(result, ip)
+	}
 	return
 }
 
-func encodeUint32(value uint32) (result []byte) {
-	result = append(result, byte((value & 0b11111111_00000000_00000000_00000000) >> 24))
-	result = append(result, byte((value & 0b00000000_11111111_00000000_00000000) >> 16))
-	result = append(result, byte((value & 0b00000000_00000000_11111111_00000000) >> 8))
-	result = append(result, byte((value & 0b00000000_00000000_00000000_11111111)))
-	return
-}
-
-func parseUint16(req []byte, pos int) uint16 {
-	return uint16(req[pos])<<8 | uint16(req[pos+1])
-}
-
-func parseUint32(req []byte, pos int) uint32 {
-	return uint32(req[pos+0]) << 24 |
-		   uint32(req[pos+1]) << 16 |
-		   uint32(req[pos+2]) <<  8 |
-		   uint32(req[pos+3])
+func (msg *Message) GetRawAnswers() []Record {
+	return msg.answers
 }

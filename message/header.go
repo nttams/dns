@@ -1,25 +1,25 @@
 package message
 
 type Header struct {
-	id           uint16
-	headerFlags  HeaderFlags
-	qdCount      uint16
-	anCount      uint16
-	nsCount      uint16
-	arCount      uint16
+	id          uint16
+	headerFlags HeaderFlags
+	qdCount     uint16
+	anCount     uint16
+	nsCount     uint16
+	arCount     uint16
 }
 
 type HeaderFlags struct {
-	qr      bool
-	opCode  byte
-	aa      bool
-	tc      bool
-	rd      bool
-	ra      bool
-	z       bool
-	ad      bool
-	cd      bool
-	rCode   byte
+	qr     bool
+	opCode byte
+	aa     bool
+	tc     bool
+	rd     bool
+	ra     bool
+	z      bool
+	ad     bool
+	cd     bool
+	rCode  byte
 }
 
 func newRequestHeaderFlags() (headerFlags HeaderFlags) {

@@ -2,12 +2,12 @@ package zone_handler
 
 import (
 	// "fmt"
+	"bufio"
 	"errors"
 	msg "message"
 	"os"
-	"bufio"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func FindDomain(domain string) []msg.Record {
@@ -35,7 +35,7 @@ func readWholeFile(filePath string) ([]msg.Record, error) {
 
 	scanner := bufio.NewScanner(file)
 
-	lines := []string {}
+	lines := []string{}
 
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())

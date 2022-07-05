@@ -1,8 +1,8 @@
 package message
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 // todo: add another request
@@ -25,14 +25,14 @@ var REQUEST_0 = []byte{
 	0x00, 0x0a, 0x00, 0x08, 0x54, 0xe6, 0x02, 0x6b, 0x32, 0xc0, 0x4b, 0x93,
 }
 
-var expectedOptRecord = Record {
+var expectedOptRecord = Record{
 	string(byte(0)), 41, 4096, 0, 12,
-	string([]byte {0x00, 0x0a, 0x00, 0x08, 0x54, 0xe6, 0x02, 0x6b, 0x32, 0xc0, 0x4b, 0x93} ),
+	string([]byte{0x00, 0x0a, 0x00, 0x08, 0x54, 0xe6, 0x02, 0x6b, 0x32, 0xc0, 0x4b, 0x93}),
 }
 
-var expectedHeaderFlags = HeaderFlags { false, 0, false, false, true, false, false, false, false, 0 }
-var expectedHeader = Header {5, expectedHeaderFlags, 1, 0, 0, 1}
-var expectedQuestion = Question { Domain {Literal, "google.com", 0}, 1, 1}
+var expectedHeaderFlags = HeaderFlags{false, 0, false, false, true, false, false, false, false, 0}
+var expectedHeader = Header{5, expectedHeaderFlags, 1, 0, 0, 1}
+var expectedQuestion = Question{Domain{Literal, "google.com", 0}, 1, 1}
 
 func TestParseHeader(t *testing.T) {
 	expectedCount := 12
@@ -64,7 +64,7 @@ func TestParseQuestion(t *testing.T) {
 }
 
 func TestParseRecords(t *testing.T) {
-	expectedRecords := Records { expectedOptRecord }
+	expectedRecords := Records{expectedOptRecord}
 	expectedCount := 23
 
 	pos := 28
@@ -73,7 +73,7 @@ func TestParseRecords(t *testing.T) {
 		t.Fatalf("parse content failed")
 	}
 
-	for i, _ := range records {
+	for i := range records {
 		if records[i] != expectedRecords[i] {
 			t.Fatalf("parse content failed")
 		}
@@ -85,11 +85,11 @@ func TestParseRecords(t *testing.T) {
 }
 
 func TestParseMessage(t *testing.T) {
-	expectedAnswer := Records {}
-	expectedAuthority := Records {}
-	expectedAdditional := Records { expectedOptRecord }
+	expectedAnswer := Records{}
+	expectedAuthority := Records{}
+	expectedAdditional := Records{expectedOptRecord}
 
-	expectedMsg := Message { expectedHeader, expectedQuestion, expectedAnswer, expectedAuthority, expectedAdditional }
+	expectedMsg := Message{expectedHeader, expectedQuestion, expectedAnswer, expectedAuthority, expectedAdditional}
 
 	msg := ParseMessage(REQUEST_0)
 

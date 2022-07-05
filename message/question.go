@@ -1,23 +1,28 @@
 package message
 
 type Question struct {
-	domain Domain
+	domain string
 	qType  uint16
 	qClass uint16
 }
 
-const DEFAULT_Q_TYPE = 1 // A
-const DEFAULT_Q_CLASS = 1 // IN
-
-func NewQuestion(domain string) Question {
-	return Question { Domain {Literal, domain, 0}, DEFAULT_Q_TYPE, DEFAULT_Q_CLASS }
+func NewQuestion(domain string, qType uint16) Question {
+	return Question{domain, qType, DEFAULT_Q_CLASS}
 }
 
 // todo: now
 func (question *Question) encode() (result []byte) {
-	result = append(result, question.domain.encode()...)
+	result = append(result, encodeDomain(question.domain)...)
 	result = append(result, encodeUint16(question.qType)...)
 	result = append(result, encodeUint16(question.qClass)...)
+	return
+}
+
+// todo: use generic? (this is similar to encodeRecords)
+func encodeQuestions(questions []Question) (result []byte) {
+	for _, question := range questions {
+		result = append(result, question.encode()...)
+	}
 	return
 }
 
@@ -32,6 +37,19 @@ func parseQuestion(req []byte, pos int) (Question, int) {
 	pos += 2
 
 	// todo
-	question := Question{Domain {Literal, domain, 0}, qType, qClass}
+	question := Question{domain, qType, qClass}
 	return question, count + 4
+}
+
+func parseQuestions(req []byte, pos, questionCount int) ([]Question, int) {
+	questions := []Question{}
+	start := pos
+
+	for i := 0; i < questionCount; i++ {
+		question, count := parseQuestion(req, pos)
+		pos += count
+
+		questions = append(questions, question)
+	}
+	return questions, pos - start
 }

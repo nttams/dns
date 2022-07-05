@@ -1,53 +1,47 @@
 package message
 
+/**
+ * RFC1035, 4.1.4. Message compression
+ * - Domain can be represented as domain literal or pointer
+ * - Question and Record use Domain
+ * - Parser MUST handle both literal and pointer response
+ * - After parsing, the response (type message) DOES NOT store any pointer, all are literal
+ * - Encoder does not encode any pointer, all are string literal. This could be a improvement in
+ * the future
+ * - Domain pointer only exists in encoded message ([]byte). Parser and encoder handle those cases
+ */
+
 import (
 	// "fmt"
 	"strings"
 )
 
-type domainType uint8
-
-const (
-	InvalidType domainType = iota
-	Literal
-	Pointer
-)
-
-type Domain struct {
-	domainType    domainType
-	domainLiteral string
-	pointer       uint16
-}
-
 // todo: only deal with liternal domain now
-func (domain *Domain) encode() (result []byte) {
-	if domain.domainType == Literal {
-		labels := strings.Split(domain.domainLiteral, ".")
-		for _, label := range labels {
-			result = append(result, byte(len(label)))
-			result = append(result, label...)
-		}
-		result = append(result, 0)
-		return
-	} else {
-		panic("not implemented Pointer yet")
+func encodeDomain(domain string) (result []byte) {
+	labels := strings.Split(domain, ".")
+	for _, label := range labels {
+		result = append(result, byte(len(label)))
+		result = append(result, label...)
 	}
+	result = append(result, 0)
+	return
 }
 
 // todo: should handle both literal and pointer
+// always return domain literal
 // rename req to msg
 func parseDomain(req []byte, pos int) (string, int) {
 	// RFC6891, 6.1.2.  Wire Format
 	// OPT record
 	if req[pos] == 0 {
-		return string([]byte{ 0 }), 1
+		return string([]byte{0}), 1
 	}
 
 	// RFC1035, 4.1.4. Message compression
-	// pointer case
-	if req[pos] & 0b1100_0000 != 0 {
-		pointerHigh := uint16(req[pos] & 0b00111111) << 8
-		pointerLow := uint16(req[pos + 1])
+	// domain pointer case
+	if req[pos]&0b1100_0000 != 0 {
+		pointerHigh := uint16(req[pos]&0b00111111) << 8
+		pointerLow := uint16(req[pos+1])
 		pointedPos := pointerHigh | pointerLow
 		domainLiteral, _ := parseDomain(req, int(pointedPos))
 		return domainLiteral, 2
