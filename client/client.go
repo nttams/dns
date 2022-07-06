@@ -1,42 +1,42 @@
 package client
 
 import (
-	"bufio"
+	"time"
 	"math/rand"
 	msg "message"
-	"net"
-	"time"
+	nc "network_controller"
 )
 
-func Init() {
+type Client struct {
+
+}
+
+func NewClient() Client {
 	rand.Seed(time.Now().UnixNano())
+	return Client {}
 }
 
-// todo: add NetworkController to handle TCP/UDP
-func Query(domain string) []string {
-	// return msg.ConvertRecordsToStrings(query(domain, msg.Q_TYPE_A))
-	return msg.ConvertRecordsToStrings(query(domain, msg.Q_TYPE_AAAA))
+func (client *Client) Query(domain string) []string {
+	return msg.ConvertRecordsToStrings(query(domain, msg.Q_TYPE_A))
 }
 
-func QueryARecordApi(domain string) []msg.Record {
+func (client *Client) QueryARecordApi(domain string) []msg.Record {
 	return query(domain, msg.Q_TYPE_A)
 }
 
-func QueryAAAARecordApi(domain string, qType uint16) []msg.Record {
+func (client *Client) QueryAAAARecordApi(domain string, qType uint16) []msg.Record {
 	return query(domain, qType)
 }
 
 func query(domain string, qType uint16) []msg.Record {
+	udpCtrl := nc.NewUdpCtrl()
 	query := msg.NewQuery(generateUniqueId(), domain, qType)
+
 	encodedRequest := query.Encode()
 
-	conn, _ := net.Dial("udp", "8.8.8.8:53")
+	udpCtrl.Send(encodedRequest, "8.8.8.8:53")
+	encodedResponse := udpCtrl.Receive()
 
-	conn.Write(encodedRequest)
-
-	buffer := make([]byte, 1024)
-	count, _ := bufio.NewReader(conn).Read(buffer)
-	encodedResponse := buffer[:count]
 	response := msg.ParseMessage(encodedResponse)
 
 	return response.GetRawAnswers()

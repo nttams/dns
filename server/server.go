@@ -2,36 +2,26 @@ package server
 
 import (
 	"client"
-	"github.com/k0kubun/pp"
 	msg "message"
-	"net"
+	nc "network_controller"
 )
 
 func Listen() {
-	client.Init()
+	cli := client.NewClient()
 
-	// addr, err := net.ResolveUDPAddr("udp", "192.168.1.4:15353")
-	addr, err := net.ResolveUDPAddr("udp", ":15353")
-	if err != nil {
-		panic("cannot connect")
-	}
-	conn, err := net.ListenUDP("udp", addr)
-	if err != nil {
-		panic("cannot connect")
-	}
+	udpCtrl := nc.NewUdpCtrl()
+	udpCtrl.Listen(":15353")
 
-	encodedRequest := make([]byte, 512)
 	for {
-		_, remoteAddr, _ := conn.ReadFromUDP(encodedRequest)
+		encodedRequest, remoteAddr := udpCtrl.Read()
 
 		request := msg.ParseMessage(encodedRequest)
 
-		answers := client.QueryARecordApi(request.GetQuestionDomain())
-		pp.Println(answers)
+		answers := cli.QueryARecordApi(request.GetQuestionDomain())
 
 		response := msg.CreateResponseFromRequest(request)
 		response.SetAnswers(answers)
 
-		conn.WriteToUDP(response.Encode(), remoteAddr)
+		udpCtrl.Write(response.Encode(), remoteAddr)
 	}
 }
