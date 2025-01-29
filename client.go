@@ -1,43 +1,41 @@
-package client
+package main
 
 import (
-	"time"
+	"main/message"
 	"math/rand"
-	msg "message"
-	nc "network_controller"
+	"time"
 )
 
 type Client struct {
-
 }
 
 func NewClient() Client {
 	rand.Seed(time.Now().UnixNano())
-	return Client {}
+	return Client{}
 }
 
 func (client *Client) Query(domain string) []string {
-	return msg.ConvertRecordsToStrings(query(domain, msg.Q_TYPE_A))
+	return message.ConvertRecordsToStrings(query(domain, message.Q_TYPE_A))
 }
 
-func (client *Client) QueryARecordApi(domain string) []msg.Record {
-	return query(domain, msg.Q_TYPE_A)
+func (client *Client) QueryARecordApi(domain string) []message.Record {
+	return query(domain, message.Q_TYPE_A)
 }
 
-func (client *Client) QueryAAAARecordApi(domain string, qType uint16) []msg.Record {
+func (client *Client) QueryAAAARecordApi(domain string, qType uint16) []message.Record {
 	return query(domain, qType)
 }
 
-func query(domain string, qType uint16) []msg.Record {
-	udpCtrl := nc.NewUdpCtrl()
-	query := msg.NewQuery(generateUniqueId(), domain, qType)
+func query(domain string, qType uint16) []message.Record {
+	udpCtrl := NewUdpCtrl()
+	query := message.NewQuery(generateUniqueId(), domain, qType)
 
 	encodedRequest := query.Encode()
 
 	udpCtrl.Send(encodedRequest, "8.8.8.8:53")
 	encodedResponse := udpCtrl.Receive()
 
-	response := msg.ParseMessage(encodedResponse)
+	response := message.ParseMessage(encodedResponse)
 
 	return response.GetRawAnswers()
 }

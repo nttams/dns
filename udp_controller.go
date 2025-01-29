@@ -1,12 +1,12 @@
-package network_controller
+package main
 
 import (
-	"net"
 	"bufio"
+	"net"
 )
 
 type UdpCtrl struct {
-	conn net.UDPConn
+	conn   net.UDPConn
 	buffer []byte
 }
 
@@ -40,12 +40,12 @@ func (ctrl *UdpCtrl) Write(data []byte, remoteAddr *net.UDPAddr) {
 // for client
 func (ctrl *UdpCtrl) Send(data []byte, addr string) {
 	remoteHost, _ := net.ResolveUDPAddr("udp", addr)
-	conn, _ := net.DialUDP("udp", &net.UDPAddr {}, remoteHost)
+	conn, _ := net.DialUDP("udp", &net.UDPAddr{}, remoteHost)
 	ctrl.conn = *conn
 	ctrl.conn.Write(data)
 }
 
-func (ctrl *UdpCtrl) Receive() []byte{
+func (ctrl *UdpCtrl) Receive() []byte {
 	count, _ := bufio.NewReader(&ctrl.conn).Read(ctrl.buffer)
 	return ctrl.buffer[:count]
 }

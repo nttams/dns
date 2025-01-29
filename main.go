@@ -1,14 +1,16 @@
 package main
 
-import (
-	// "fmt"
-	"server"
-)
+import "fmt"
+
+// "fmt"
+// "server"
 
 func main() {
-	// client.Init()
-	// result := client.Query("google.com")
-	// fmt.Println(result)
+	// Init()
+	client := NewClient()
+	result := client.Query("google.com")
+	fmt.Println(result)
 
-	server.Listen()
+	// s := NewDnsServer()
+	// s.Listen()
 }
